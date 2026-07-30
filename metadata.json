@@ -1,0 +1,6 @@
+{
+  "name": "CreaWeb",
+  "description": "Plataforma integral de servicios digitales de diseño web, gráfico, publicidad y redes sociales para pequeños emprendedores en Perú.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
