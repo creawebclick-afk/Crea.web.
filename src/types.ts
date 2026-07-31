@@ -19,6 +19,16 @@ export interface User {
   autoriza_portafolio_default?: boolean;
 }
 
+export interface BusinessConfig {
+  id: number;
+  nombre_negocio: string;
+  email_contacto: string;
+  telefono_whatsapp: string;
+  numero_yape: string;
+  numero_plin: string;
+  ubicacion: string;
+}
+
 export type ServiceCategory = 'web' | 'grafico' | 'publicidad' | 'redes' | 'branding';
 
 export interface ServicePlan {
@@ -69,7 +79,7 @@ export interface Subtask {
 }
 
 export type PaymentType = 'anticipo' | 'saldo';
-export type PaymentMethod = 'yape' | 'plin' | 'transferencia';
+export type PaymentMethod = 'yape' | 'plin' | 'transferencia' | 'efectivo';
 export type PaymentStatus = 'pendiente' | 'verificado' | 'rechazado';
 
 export interface Payment {

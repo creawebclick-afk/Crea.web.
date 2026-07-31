@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { GoogleGenAI } from '@google/genai';
 import dotenv from 'dotenv';
+import { createClient } from '@supabase/supabase-js';
 import { INITIAL_SERVICES } from './src/data/mockData.js';
 
 dotenv.config();
@@ -14,6 +15,28 @@ const app = express();
 const PORT = process.env.PORT || 8080;
 
 app.use(express.json());
+
+// Cliente de Supabase con la clave pública (anon), solo para leer configuracion
+// (es una tabla de lectura pública, no expone datos sensibles).
+const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || '';
+const supabaseServer = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey) : null;
+
+async function getBusinessConfig() {
+  const defaults = {
+    nombre_negocio: 'CreaWeb',
+    email_contacto: 'crea.web.click@gmail.com',
+    telefono_whatsapp: '51905551491',
+    ubicacion: 'Nuevo Chimbote, Perú',
+  };
+  if (!supabaseServer) return defaults;
+  try {
+    const { data } = await supabaseServer.from('configuracion').select('*').eq('id', 1).single();
+    return data ? { ...defaults, ...data } : defaults;
+  } catch {
+    return defaults;
+  }
+}
 
 // Nota: toda la data de usuarios/proyectos/portafolio/reuniones/notificaciones
 // ahora vive en Supabase (Postgres + RLS), no en memoria del servidor.
@@ -45,13 +68,14 @@ app.get('/api/services', (req, res) => {
 app.post('/api/creabot/chat', async (req, res) => {
   try {
     const { message, history } = req.body;
+    const biz = await getBusinessConfig();
 
     const systemInstruction = `
-Eres "CreaBot IA", el asistente inteligente oficial de CreaWeb (plataforma peruana de servicios digitales para pequeños emprendedores en Perú).
-Información clave de CreaWeb:
+Eres "CreaBot IA", el asistente inteligente oficial de ${biz.nombre_negocio} (plataforma peruana de servicios digitales para pequeños emprendedores, con sede en ${biz.ubicacion}).
+Información clave:
 - Web: https://creaempresasweb.my.canva.site/
-- WhatsApp: +51 905 551 491
-- Email: crea.web.click@gmail.com
+- WhatsApp: +${biz.telefono_whatsapp}
+- Email: ${biz.email_contacto}
 - Servicios & Precios:
   * Diseño Web: Básico (S/ 50), Intermedio (S/ 80), Tienda Online E-commerce (S/ 100).
   * Diseño Gráfico: Logo (S/ 15-20), Banner (S/ 10-15), Afiche (S/ 8-12), Post Redes (S/ 5-10).
@@ -66,7 +90,8 @@ Instrucciones de comportamiento:
 2. Si el usuario pregunta por un servicio o desea cotizar, hazle preguntas breves y concisas (tipo de negocio, presupuesto, funciones necesarias).
 3. Cuando tengas suficiente información o el usuario te pida cotizar, preséntale un resumen claro con el precio en Soles (S/) y sugiérele registrar su solicitud con el 50% de anticipo.
 4. Manten tus respuestas concisas (máximo 2 a 3 párrafos cortos) con buen formato.
-5. Si detectas que el usuario pregunta cosas no relacionadas o necesita atención personalizada, ofrece hablar con un asesor por WhatsApp (+51 905 551 491).
+5. Si detectas que el usuario pregunta cosas no relacionadas o necesita atención personalizada, ofrece hablar con un asesor por WhatsApp (+${biz.telefono_whatsapp}).
+6. MUY IMPORTANTE sobre pagos: nunca des un número de Yape, Plin o cuenta bancaria por tu cuenta, ni inventes uno. Cuando el usuario diga que quiere pagar o pregunte a dónde pagar, dile que coordine directo por WhatsApp (+${biz.telefono_whatsapp}) o use el botón "Coordinar Pago por WhatsApp" dentro de su proyecto, donde el equipo le confirma personalmente el número correcto.
 `;
 
     if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'MY_GEMINI_API_KEY') {

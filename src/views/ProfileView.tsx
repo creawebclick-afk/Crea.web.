@@ -8,7 +8,7 @@ export const ProfileView: React.FC = () => {
   const [nombre, setNombre] = useState(currentUser?.nombre_completo || '');
   const [empresa, setEmpresa] = useState(currentUser?.empresa_nombre || '');
   const [telefono, setTelefono] = useState(currentUser?.telefono || '');
-  const [ubicacion, setUbicacion] = useState(currentUser?.ubicacion || 'Lima, Perú');
+  const [ubicacion, setUbicacion] = useState(currentUser?.ubicacion || 'Nuevo Chimbote, Perú');
   const [consentPortfolio, setConsentPortfolio] = useState(currentUser?.autoriza_portafolio_default ?? false);
   const [isSaved, setIsSuccessSaved] = useState(false);
 

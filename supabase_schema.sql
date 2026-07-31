@@ -18,7 +18,7 @@ create table public.profiles (
   foto_perfil text,
   empresa_nombre text,
   descripcion text,
-  ubicacion text default 'Lima, Perú',
+  ubicacion text default 'Nuevo Chimbote, Perú',
   fecha_registro date not null default current_date,
   estado text not null default 'activo' check (estado in ('activo', 'inactivo', 'suspendido')),
   autoriza_portafolio_default boolean not null default false,
@@ -203,7 +203,7 @@ create table public.payment_reports (
   proyecto_id text not null references public.projects(id),
   usuario_id uuid not null references auth.users(id),
   tipo text not null check (tipo in ('anticipo', 'saldo')),
-  metodo text not null check (metodo in ('yape', 'plin', 'transferencia')),
+  metodo text not null check (metodo in ('yape', 'plin', 'transferencia', 'efectivo')),
   referencia text not null,
   monto numeric not null,
   estado text not null default 'pendiente' check (estado in ('pendiente', 'verificado', 'rechazado')),
@@ -402,6 +402,34 @@ create policy "Cliente inserta su propia sesión"
 create policy "Cliente actualiza su propia sesión, admin actualiza cualquiera"
   on public.creabot_sessions for update
   using (usuario_id = auth.uid() or public.is_admin());
+
+-- ------------------------------------------------------------
+-- 8. CONFIGURACIÓN DEL NEGOCIO (editable desde el panel admin, sin tocar código)
+-- ------------------------------------------------------------
+create table public.configuracion (
+  id int primary key default 1,
+  nombre_negocio text not null default 'CreaWeb',
+  email_contacto text not null default 'crea.web.click@gmail.com',
+  telefono_whatsapp text not null default '51905551491',
+  numero_yape text not null default '',
+  numero_plin text not null default '',
+  ubicacion text not null default 'Nuevo Chimbote, Perú',
+  updated_at timestamptz not null default now(),
+  constraint solo_una_fila check (id = 1)
+);
+
+insert into public.configuracion (id, nombre_negocio, email_contacto, telefono_whatsapp, numero_yape, numero_plin, ubicacion)
+values (1, 'CreaWeb', 'crea.web.click@gmail.com', '51905551491', '905551491', '905551491', 'Nuevo Chimbote, Perú');
+
+alter table public.configuracion enable row level security;
+
+create policy "Cualquiera puede leer la configuración (es pública en la web)"
+  on public.configuracion for select
+  using (true);
+
+create policy "Solo el admin puede editar la configuración"
+  on public.configuracion for update
+  using (public.is_admin());
 
 -- ============================================================
 -- Fin del esquema. Después de correr esto:

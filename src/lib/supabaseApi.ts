@@ -5,7 +5,7 @@
  * por Row Level Security en la base de datos, no solo en el frontend.
  */
 import { supabase } from './supabaseClient';
-import { User, Project, Meeting, PortfolioItem, AppNotification, UserRole, ProjectFile, Subtask } from '../types';
+import { User, Project, Meeting, PortfolioItem, AppNotification, UserRole, ProjectFile, Subtask, BusinessConfig } from '../types';
 
 // ---------- Perfiles / Usuarios ----------
 
@@ -343,6 +343,31 @@ export async function fetchAbandonedQuotes() {
     return [];
   }
   return data || [];
+}
+
+// ---------- Configuración del negocio (editable desde el panel admin) ----------
+
+export async function fetchConfig(): Promise<BusinessConfig | null> {
+  const { data, error } = await supabase.from('configuracion').select('*').eq('id', 1).single();
+  if (error) {
+    console.error('Error al cargar configuración:', error.message);
+    return null;
+  }
+  return data as BusinessConfig;
+}
+
+export async function updateConfig(changes: Partial<BusinessConfig>): Promise<BusinessConfig | null> {
+  const { data, error } = await supabase
+    .from('configuracion')
+    .update(changes)
+    .eq('id', 1)
+    .select()
+    .single();
+  if (error) {
+    console.error('Error al actualizar configuración:', error.message);
+    return null;
+  }
+  return data as BusinessConfig;
 }
 
 // ---------- CreaBot (sigue pasando por el servidor Express, que guarda la GEMINI_API_KEY) ----------

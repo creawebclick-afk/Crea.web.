@@ -1,30 +1,36 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { X, QrCode, Building, CheckCircle2, ArrowRight, Lock, Clock } from 'lucide-react';
+import { X, MessageCircle, Lock, Clock, ArrowRight } from 'lucide-react';
 import { CreaWebLogo } from './CreaWebLogo';
 
-type SimpleMethod = 'yape' | 'plin' | 'transferencia';
+type SimpleMethod = 'yape' | 'plin' | 'transferencia' | 'efectivo';
 
 export const PaymentModal: React.FC = () => {
-  const { isPaymentModalOpen, setIsPaymentModalOpen, paymentTargetProject, paymentType, handleReportPayment, openLegalModal } =
+  const { isPaymentModalOpen, setIsPaymentModalOpen, paymentTargetProject, paymentType, handleReportPayment, openLegalModal, config } =
     useApp();
 
   const [selectedMethod, setSelectedMethod] = useState<SimpleMethod>('yape');
   const [txRef, setTxRef] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [showReportForm, setShowReportForm] = useState(false);
 
   if (!isPaymentModalOpen || !paymentTargetProject) return null;
 
   const totalAmount = paymentTargetProject.presupuesto_total || 100;
   const amountToPay = totalAmount / 2;
+  const whatsapp = config?.telefono_whatsapp || '51905551491';
+
+  const mensajeWhatsapp = encodeURIComponent(
+    `Hola CreaWeb 👋 Quiero coordinar el pago de mi proyecto "${paymentTargetProject.servicio_nombre || 'Servicio CreaWeb'}" (${
+      paymentType === 'anticipo' ? 'anticipo 50%' : 'saldo final 50%'
+    }: S/ ${amountToPay}.00). ¿Me pasas el número para Yape/Plin o los datos de la cuenta?`
+  );
 
   const handleSubmitPayment = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
-
-    const ok = await handleReportPayment(paymentTargetProject, selectedMethod, txRef.trim());
-
+    const ok = await handleReportPayment(paymentTargetProject, selectedMethod as any, txRef.trim());
     setIsProcessing(false);
     if (ok) {
       setIsSuccess(true);
@@ -38,7 +44,6 @@ export const PaymentModal: React.FC = () => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="relative w-full max-w-lg bg-[#1A1A2E] border border-purple-500/40 rounded-2xl shadow-2xl overflow-hidden text-white my-8">
-        {/* Modal Header */}
         <div className="bg-gradient-to-r from-[#121223] via-[#1A1A2E] to-purple-950 px-6 py-4 border-b border-purple-900/50 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <CreaWebLogo size="xs" variant="icon" />
@@ -61,7 +66,6 @@ export const PaymentModal: React.FC = () => {
           </button>
         </div>
 
-        {/* Modal Body */}
         <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
           {isSuccess ? (
             <div className="py-8 text-center space-y-4">
@@ -75,8 +79,7 @@ export const PaymentModal: React.FC = () => {
               </p>
             </div>
           ) : (
-            <form onSubmit={handleSubmitPayment} className="space-y-5">
-              {/* Summary Card */}
+            <div className="space-y-5">
               <div className="p-4 bg-purple-950/60 border border-purple-800/60 rounded-xl space-y-2">
                 <div className="flex justify-between items-center text-xs text-gray-300">
                   <span>Presupuesto Total del Proyecto:</span>
@@ -88,78 +91,63 @@ export const PaymentModal: React.FC = () => {
                 </div>
               </div>
 
-              <div className="text-[11px] text-amber-300 bg-amber-950/30 border border-amber-800/40 rounded-lg px-3 py-2 flex gap-2 items-start">
-                <Clock className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-                <span>
-                  Realiza el pago por el medio elegido y luego pega aquí el número de operación. Un asesor lo
-                  verificará antes de confirmar tu proyecto.
-                </span>
-              </div>
+              {!showReportForm ? (
+                <>
+                  <div className="text-[11px] text-amber-300 bg-amber-950/30 border border-amber-800/40 rounded-lg px-3 py-2 flex gap-2 items-start">
+                    <MessageCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                    <span>
+                      Por seguridad, no mostramos números de pago automáticamente. Coordina directo con
+                      nosotros por WhatsApp y te confirmamos a dónde Yapear/Plinear o transferir.
+                    </span>
+                  </div>
 
-              {/* Payment Method Selector */}
-              <div>
-                <label className="block text-xs font-semibold uppercase text-gray-300 mb-2">
-                  Selecciona Método de Pago en Perú:
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedMethod('yape')}
-                    className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all ${
-                      selectedMethod === 'yape'
-                        ? 'bg-purple-600/30 border-pink-500 text-white font-bold ring-2 ring-pink-500/50'
-                        : 'bg-purple-950/30 border-gray-800 text-gray-300 hover:border-purple-600'
-                    }`}
+                  <a
+                    href={`https://wa.me/${whatsapp}?text=${mensajeWhatsapp}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all text-sm"
                   >
-                    <QrCode className="w-5 h-5 text-purple-400" />
-                    <span className="text-xs">Yape</span>
-                  </button>
+                    <MessageCircle className="w-4 h-4" /> Coordinar Pago por WhatsApp
+                  </a>
 
                   <button
                     type="button"
-                    onClick={() => setSelectedMethod('plin')}
-                    className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all ${
-                      selectedMethod === 'plin'
-                        ? 'bg-purple-600/30 border-pink-500 text-white font-bold ring-2 ring-pink-500/50'
-                        : 'bg-purple-950/30 border-gray-800 text-gray-300 hover:border-purple-600'
-                    }`}
+                    onClick={() => setShowReportForm(true)}
+                    className="w-full py-2.5 text-purple-300 hover:text-white text-xs font-semibold flex items-center justify-center gap-1"
                   >
-                    <QrCode className="w-5 h-5 text-teal-400" />
-                    <span className="text-xs">Plin</span>
+                    Ya pagué, quiero reportarlo <ArrowRight className="w-3.5 h-3.5" />
                   </button>
+                </>
+              ) : (
+                <form onSubmit={handleSubmitPayment} className="space-y-5">
+                  <div className="text-[11px] text-amber-300 bg-amber-950/30 border border-amber-800/40 rounded-lg px-3 py-2 flex gap-2 items-start">
+                    <Clock className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                    <span>Cuenta el medio que usaste y el código de operación. Un asesor lo verificará antes de confirmar tu proyecto.</span>
+                  </div>
 
-                  <button
-                    type="button"
-                    onClick={() => setSelectedMethod('transferencia')}
-                    className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all ${
-                      selectedMethod === 'transferencia'
-                        ? 'bg-purple-600/30 border-pink-500 text-white font-bold ring-2 ring-pink-500/50'
-                        : 'bg-purple-950/30 border-gray-800 text-gray-300 hover:border-purple-600'
-                    }`}
-                  >
-                    <Building className="w-5 h-5 text-amber-400" />
-                    <span className="text-xs">Banco BCP</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Method Details */}
-              {(selectedMethod === 'yape' || selectedMethod === 'plin') && (
-                <div className="p-4 bg-purple-950/40 border border-purple-800/60 rounded-xl space-y-3 text-xs text-gray-200">
-                  <div className="flex items-center gap-3">
-                    <div className="w-16 h-16 bg-white rounded-lg p-1.5 flex items-center justify-center shrink-0">
-                      <QrCode className="w-full h-full text-purple-900" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-white">Yape / Plin Oficial CreaWeb</p>
-                      <p className="text-emerald-400 font-semibold text-sm">Número: +51 905 551 491</p>
-                      <p className="text-gray-400">Titular: CreaWeb Perú S.A.C.</p>
+                  <div>
+                    <label className="block text-xs font-semibold uppercase text-gray-300 mb-2">Medio de pago usado:</label>
+                    <div className="grid grid-cols-4 gap-2">
+                      {(['yape', 'plin', 'transferencia', 'efectivo'] as SimpleMethod[]).map((m) => (
+                        <button
+                          key={m}
+                          type="button"
+                          onClick={() => setSelectedMethod(m)}
+                          className={`p-2.5 rounded-xl border text-xs font-semibold capitalize transition-all ${
+                            selectedMethod === m
+                              ? 'bg-purple-600/30 border-pink-500 text-white ring-2 ring-pink-500/50'
+                              : 'bg-purple-950/30 border-gray-800 text-gray-300 hover:border-purple-600'
+                          }`}
+                        >
+                          {m === 'transferencia' ? 'Transf.' : m}
+                        </button>
+                      ))}
                     </div>
                   </div>
 
                   <div>
                     <label className="block text-[11px] font-semibold text-gray-300 mb-1">
-                      Código de Operación o Nro de Referencia:
+                      Código de Operación / Referencia:
                     </label>
                     <input
                       type="text"
@@ -170,61 +158,43 @@ export const PaymentModal: React.FC = () => {
                       className="w-full bg-[#121223] border border-purple-700/60 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-pink-500"
                     />
                   </div>
-                </div>
-              )}
 
-              {selectedMethod === 'transferencia' && (
-                <div className="p-4 bg-purple-950/40 border border-purple-800/60 rounded-xl space-y-3 text-xs text-gray-200">
-                  <div className="space-y-1">
-                    <p className="font-bold text-white">Transferencia BCP / CCI Perú</p>
-                    <p>Cuenta BCP Soles: 193-9821034-0-12</p>
-                    <p>CCI: 00219300982103401219</p>
-                    <p className="text-gray-400">Titular: CreaWeb Perú S.A.C.</p>
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-semibold text-gray-300 mb-1">
-                      Nro de Operación de Transferencia:
+                  <div className="flex items-start gap-2 text-[11px] text-gray-400">
+                    <input type="checkbox" required defaultChecked id="terms-pay" className="mt-0.5 rounded" />
+                    <label htmlFor="terms-pay">
+                      Acepto los{' '}
+                      <button type="button" onClick={() => openLegalModal('terminos')} className="text-purple-300 underline">
+                        Términos del Servicio 50/50
+                      </button>{' '}
+                      y la Política de Reembolso (100% garantizado en estado 0%).
                     </label>
-                    <input
-                      type="text"
-                      required
-                      value={txRef}
-                      onChange={(e) => setTxRef(e.target.value)}
-                      placeholder="Ej: BCP-198234"
-                      className="w-full bg-[#121223] border border-purple-700/60 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none"
-                    />
                   </div>
-                </div>
+
+                  <button
+                    type="submit"
+                    disabled={isProcessing}
+                    className="w-full py-3.5 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 hover:from-purple-500 hover:to-pink-500 text-white font-extrabold rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all text-sm disabled:opacity-50"
+                  >
+                    {isProcessing ? (
+                      <span>Enviando reporte de pago...</span>
+                    ) : (
+                      <>
+                        <Lock className="w-4 h-4" />
+                        <span>Reportar Pago de S/ {amountToPay}.00 Soles</span>
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowReportForm(false)}
+                    className="w-full text-center text-[11px] text-gray-500 hover:text-gray-300"
+                  >
+                    ← Volver a coordinar por WhatsApp
+                  </button>
+                </form>
               )}
-
-              {/* Terms Checkbox */}
-              <div className="flex items-start gap-2 text-[11px] text-gray-400">
-                <input type="checkbox" required defaultChecked id="terms-pay" className="mt-0.5 rounded" />
-                <label htmlFor="terms-pay">
-                  Acepto los{' '}
-                  <button type="button" onClick={() => openLegalModal('terminos')} className="text-purple-300 underline">
-                    Términos del Servicio 50/50
-                  </button>{' '}
-                  y la Política de Reembolso (100% garantizado en estado 0%).
-                </label>
-              </div>
-
-              {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={isProcessing}
-                className="w-full py-3.5 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 hover:from-purple-500 hover:to-pink-500 text-white font-extrabold rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all text-sm disabled:opacity-50"
-              >
-                {isProcessing ? (
-                  <span>Enviando reporte de pago...</span>
-                ) : (
-                  <>
-                    <Lock className="w-4 h-4" />
-                    <span>Reportar Pago de S/ {amountToPay}.00 Soles</span>
-                  </>
-                )}
-              </button>
-            </form>
+            </div>
           )}
         </div>
       </div>

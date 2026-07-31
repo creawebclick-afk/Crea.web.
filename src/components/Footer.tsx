@@ -4,7 +4,10 @@ import { CreaWebLogo } from './CreaWebLogo';
 import { useApp } from '../context/AppContext';
 
 export const Footer: React.FC = () => {
-  const { openLegalModal } = useApp();
+  const { openLegalModal, config } = useApp();
+  const whatsapp = config?.telefono_whatsapp || '51905551491';
+  const email = config?.email_contacto || 'crea.web.click@gmail.com';
+  const ubicacion = config?.ubicacion || 'Nuevo Chimbote, Perú';
   return (
     <footer className="bg-[#121223] text-gray-400 border-t border-purple-900/40 pt-12 pb-8 text-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -26,14 +29,14 @@ export const Footer: React.FC = () => {
             <ul className="space-y-2.5 text-xs">
               <li className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors">
                 <Phone className="w-4 h-4 text-emerald-400" />
-                <a href="https://wa.me/51905551491" target="_blank" rel="noreferrer" className="hover:underline">
-                  WhatsApp: +51 905 551 491
+                <a href={`https://wa.me/${whatsapp}`} target="_blank" rel="noreferrer" className="hover:underline">
+                  WhatsApp: +{whatsapp}
                 </a>
               </li>
               <li className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors">
                 <Mail className="w-4 h-4 text-purple-400" />
-                <a href="mailto:crea.web.click@gmail.com" className="hover:underline">
-                  crea.web.click@gmail.com
+                <a href={`mailto:${email}`} className="hover:underline">
+                  {email}
                 </a>
               </li>
               <li className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors">
@@ -44,7 +47,7 @@ export const Footer: React.FC = () => {
               </li>
               <li className="flex items-center gap-2 text-gray-400">
                 <MapPin className="w-4 h-4 text-amber-400" />
-                <span>Lima, Perú (Atención a todo el país)</span>
+                <span>{ubicacion} (Atención a todo el país)</span>
               </li>
             </ul>
           </div>
@@ -92,9 +95,12 @@ export const Footer: React.FC = () => {
           <div className="flex gap-4">
             <button onClick={() => openLegalModal('terminos')} className="hover:text-gray-300">Términos y Condiciones</button>
             <button onClick={() => openLegalModal('privacidad')} className="hover:text-gray-300">Política de Privacidad</button>
-            <a href="https://wa.me/51905551491?text=Quiero%20presentar%20un%20reclamo" target="_blank" rel="noreferrer" className="hover:text-gray-300">Libro de Reclamaciones</a>
+            <a href={`https://wa.me/${whatsapp}?text=Quiero%20presentar%20un%20reclamo`} target="_blank" rel="noreferrer" className="hover:text-gray-300">Libro de Reclamaciones</a>
           </div>
         </div>
+        <p className="pt-4 text-center text-[11px] text-gray-600">
+          Proyecto desarrollado por Luana Yarlaque, José Mendieta y Rodrigo Paredes.
+        </p>
       </div>
     </footer>
   );

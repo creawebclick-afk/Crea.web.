@@ -18,6 +18,7 @@ import {
   MessageCircle,
   Wallet,
   UserPlus,
+  Settings,
 } from 'lucide-react';
 
 export const AdminDashboardView: React.FC = () => {
@@ -31,10 +32,12 @@ export const AdminDashboardView: React.FC = () => {
     refreshProjects,
     refreshTeamMembers,
     refreshPortfolio,
+    config,
+    updateBusinessConfig,
   } = useApp();
 
   const [activeAdminTab, setActiveAdminTab] = useState<
-    'dashboard' | 'proyectos' | 'creabot' | 'portafolio' | 'equipo' | 'pagos'
+    'dashboard' | 'proyectos' | 'creabot' | 'portafolio' | 'equipo' | 'pagos' | 'ajustes'
   >('dashboard');
   const [selectedProjectModal, setSelectedProjectModal] = useState<Project | null>(null);
   const [assignUserModal, setAssignUserModal] = useState<string>('');
@@ -113,6 +116,40 @@ export const AdminDashboardView: React.FC = () => {
   const [pfEsModelo, setPfEsModelo] = useState(true);
   const [pfClienteNombre, setPfClienteNombre] = useState('');
   const [pfMsg, setPfMsg] = useState('');
+
+  // --- Ajustes del negocio (editable, sin tocar código) ---
+  const [cfgNombre, setCfgNombre] = useState('');
+  const [cfgEmail, setCfgEmail] = useState('');
+  const [cfgWhatsapp, setCfgWhatsapp] = useState('');
+  const [cfgYape, setCfgYape] = useState('');
+  const [cfgPlin, setCfgPlin] = useState('');
+  const [cfgUbicacion, setCfgUbicacion] = useState('');
+  const [cfgMsg, setCfgMsg] = useState('');
+
+  useEffect(() => {
+    if (config) {
+      setCfgNombre(config.nombre_negocio);
+      setCfgEmail(config.email_contacto);
+      setCfgWhatsapp(config.telefono_whatsapp);
+      setCfgYape(config.numero_yape);
+      setCfgPlin(config.numero_plin);
+      setCfgUbicacion(config.ubicacion);
+    }
+  }, [config]);
+
+  const handleSaveConfig = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCfgMsg('');
+    const ok = await updateBusinessConfig({
+      nombre_negocio: cfgNombre,
+      email_contacto: cfgEmail,
+      telefono_whatsapp: cfgWhatsapp,
+      numero_yape: cfgYape,
+      numero_plin: cfgPlin,
+      ubicacion: cfgUbicacion,
+    });
+    setCfgMsg(ok ? 'Cambios guardados. Ya se están usando en toda la web.' : 'Ocurrió un error al guardar.');
+  };
 
   const handleAddPortfolioItem = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -229,6 +266,16 @@ export const AdminDashboardView: React.FC = () => {
             }`}
           >
             Equipo ({teamMembers.length})
+          </button>
+          <button
+            onClick={() => setActiveAdminTab('ajustes')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1 ${
+              activeAdminTab === 'ajustes'
+                ? 'bg-amber-500 text-black font-extrabold shadow-md'
+                : 'bg-[#1A1A2E] text-gray-300 border border-purple-900'
+            }`}
+          >
+            <Settings className="w-3.5 h-3.5" /> Ajustes del Negocio
           </button>
         </div>
       </div>
@@ -665,6 +712,80 @@ export const AdminDashboardView: React.FC = () => {
               </table>
             </div>
           )}
+        </div>
+      )}
+
+      {/* AJUSTES TAB: datos del negocio, editables sin tocar código */}
+      {activeAdminTab === 'ajustes' && (
+        <div className="bg-[#1A1A2E] border border-purple-900/60 rounded-3xl p-6 space-y-4 shadow-xl max-w-2xl">
+          <h3 className="text-xl font-bold text-white flex items-center gap-2">
+            <Settings className="w-5 h-5 text-amber-400" /> Ajustes del Negocio
+          </h3>
+          <p className="text-xs text-gray-400">
+            Estos datos se usan en toda la web (pie de página, WhatsApp, CreaBot, pagos). Si cambias de número
+            o de ciudad en el futuro, solo actualízalo aquí — no hace falta tocar código ni volver a publicar.
+          </p>
+
+          <form onSubmit={handleSaveConfig} className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="md:col-span-2">
+              <label className="block text-[11px] text-gray-400 mb-1">Nombre del negocio</label>
+              <input
+                value={cfgNombre}
+                onChange={(e) => setCfgNombre(e.target.value)}
+                className="w-full bg-[#121223] border border-purple-700/60 rounded-xl px-3 py-2 text-xs text-white focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] text-gray-400 mb-1">Correo de contacto</label>
+              <input
+                value={cfgEmail}
+                onChange={(e) => setCfgEmail(e.target.value)}
+                className="w-full bg-[#121223] border border-purple-700/60 rounded-xl px-3 py-2 text-xs text-white focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] text-gray-400 mb-1">Ubicación</label>
+              <input
+                value={cfgUbicacion}
+                onChange={(e) => setCfgUbicacion(e.target.value)}
+                className="w-full bg-[#121223] border border-purple-700/60 rounded-xl px-3 py-2 text-xs text-white focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] text-gray-400 mb-1">
+                WhatsApp (solo números, con código de país: 51...)
+              </label>
+              <input
+                value={cfgWhatsapp}
+                onChange={(e) => setCfgWhatsapp(e.target.value.replace(/[^0-9]/g, ''))}
+                className="w-full bg-[#121223] border border-purple-700/60 rounded-xl px-3 py-2 text-xs text-white focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] text-gray-400 mb-1">Número de Yape</label>
+              <input
+                value={cfgYape}
+                onChange={(e) => setCfgYape(e.target.value)}
+                className="w-full bg-[#121223] border border-purple-700/60 rounded-xl px-3 py-2 text-xs text-white focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] text-gray-400 mb-1">Número de Plin</label>
+              <input
+                value={cfgPlin}
+                onChange={(e) => setCfgPlin(e.target.value)}
+                className="w-full bg-[#121223] border border-purple-700/60 rounded-xl px-3 py-2 text-xs text-white focus:outline-none"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="md:col-span-2 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold rounded-xl text-xs"
+            >
+              Guardar Cambios
+            </button>
+          </form>
+          {cfgMsg && <div className="text-xs text-amber-300">{cfgMsg}</div>}
         </div>
       )}
 

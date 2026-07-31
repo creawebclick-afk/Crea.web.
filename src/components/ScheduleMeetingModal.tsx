@@ -11,7 +11,7 @@ import { X, Calendar as CalendarIcon, Clock, Video, Phone, MapPin, CheckCircle2 
 import { MeetingType } from '../types';
 
 export const ScheduleMeetingModal: React.FC = () => {
-  const { isMeetingModalOpen, setIsMeetingModalOpen, handleScheduleMeeting, projects } = useApp();
+  const { isMeetingModalOpen, setIsMeetingModalOpen, handleScheduleMeeting, projects, config } = useApp();
 
   const [selectedDateStr, setSelectedDateStr] = useState<string>(
     new Date(Date.now() + 86400000).toISOString().split('T')[0] // Tomorrow by default
@@ -175,7 +175,7 @@ export const ScheduleMeetingModal: React.FC = () => {
                     }`}
                   >
                     <MapPin className="w-4 h-4 text-amber-400" />
-                    <span>Oficina Lima</span>
+                    <span>Oficina {config?.ubicacion?.split(",")[0] || "Nuevo Chimbote"}</span>
                   </button>
                 </div>
               </div>

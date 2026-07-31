@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { User, Project, Service, Meeting, PortfolioItem, AppNotification, UserRole, Subtask } from '../types';
+import { User, Project, Service, Meeting, PortfolioItem, AppNotification, UserRole, Subtask, BusinessConfig } from '../types';
 import { INITIAL_SERVICES } from '../data/mockData';
 import { supabase } from '../lib/supabaseClient';
 import {
@@ -21,6 +21,8 @@ import {
   adminVerifyPayment,
   updateMyProfile,
   markCreaBotSessionConverted,
+  fetchConfig,
+  updateConfig,
 } from '../lib/supabaseApi';
 
 interface AppContextType {
@@ -60,6 +62,9 @@ interface AppContextType {
   legalModalTab: 'terminos' | 'privacidad' | null;
   openLegalModal: (tab: 'terminos' | 'privacidad') => void;
   closeLegalModal: () => void;
+
+  config: BusinessConfig | null;
+  updateBusinessConfig: (changes: Partial<BusinessConfig>) => Promise<boolean>;
 
   refreshProjects: () => Promise<void>;
   refreshTeamMembers: () => Promise<void>;
@@ -109,6 +114,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [legalModalTab, setLegalModalTab] = useState<'terminos' | 'privacidad' | null>(null);
   const openLegalModal = (tab: 'terminos' | 'privacidad') => setLegalModalTab(tab);
   const closeLegalModal = () => setLegalModalTab(null);
+
+  const [config, setConfig] = useState<BusinessConfig | null>(null);
+  useEffect(() => {
+    fetchConfig().then(setConfig);
+  }, []);
+  const updateBusinessConfig = async (changes: Partial<BusinessConfig>) => {
+    const updated = await updateConfig(changes);
+    if (updated) {
+      setConfig(updated);
+      return true;
+    }
+    return false;
+  };
 
   // --- Sesión real de Supabase Auth ---
   useEffect(() => {
@@ -349,6 +367,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         legalModalTab,
         openLegalModal,
         closeLegalModal,
+        config,
+        updateBusinessConfig,
         refreshProjects,
         refreshTeamMembers,
         refreshPortfolio,
